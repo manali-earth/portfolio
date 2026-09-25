@@ -1,0 +1,10 @@
+{
+  "imageBase": "https://database-34a.pages.dev/photos/",
+  "home": "https://database-34a.pages.dev/home.json",
+  "myStory": "https://database-34a.pages.dev/my-story.json",
+  "educationExperience": "https://database-34a.pages.dev/education-experience.json",
+  "gisProjects": "https://database-34a.pages.dev/projects.json",
+  "researchPublications": "https://database-34a.pages.dev/publications.json",
+  "conferences": "https://database-34a.pages.dev/conferences.json",
+  "leadership": "https://database-34a.pages.dev/leadership.json"
+}
