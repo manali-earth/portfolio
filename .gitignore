@@ -1,0 +1,5 @@
+*.patch
+
+.env
+.env.*
+!.env.example
