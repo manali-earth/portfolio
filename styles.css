@@ -883,3 +883,49 @@ button:focus-visible {
 .hero a:focus-visible {
     outline-color: var(--rose)
 }
+
+
+/* Project page segments */
+.segment-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 10px;
+    margin: 0 auto 34px;
+    max-width: 900px
+}
+
+.segment-nav a {
+    padding: 7px 14px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-size: 14px;
+    text-decoration: none;
+    color: var(--ink)
+}
+
+.segment-nav a:hover {
+    border-color: var(--ink)
+}
+
+.segment-nav a span {
+    color: var(--text-soft);
+    margin-left: 4px
+}
+
+.project-segment {
+    margin: 0 0 46px;
+    scroll-margin-top: 90px
+}
+
+.project-segment>h2 {
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule)
+}
+
+.segment-empty {
+    color: var(--text-soft);
+    font-style: italic;
+    margin: 0
+}
