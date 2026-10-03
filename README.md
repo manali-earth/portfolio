@@ -9,7 +9,7 @@ The homepage includes the same major content flow as the reference:
 - Recent News
 - Photo Gallery - Geography in Action
 - Education and Experience
-- GIS and Remote Sensing Projects
+- Projects
 - Journal Publications
 - Contact
 
@@ -93,3 +93,7 @@ python3 -m http.server 8000
 ```
 
 Then open `http://localhost:8000`.
+
+## HTML in database text
+
+Any text in the database JSON can contain inline HTML such as `<br>`, `<b>`, `<i>`, `<a href="...">` or `<span>`. The site inserts it as HTML in every section (hero, news, gallery captions, timelines, project cards, detail pages, contact, page headings), so formatting can be changed from the admin panel without touching site code. Places that cannot hold markup (alt text, tooltips, the browser tab title) automatically get a tag-free version.
