@@ -8,7 +8,7 @@ The homepage includes the same major content flow as the reference:
 
 - Recent News
 - Photo Gallery - Geography in Action
-- Education and Experience
+- Education & Experience
 - Projects
 - Journal Publications
 - Contact
@@ -20,9 +20,9 @@ The top bar also opens dedicated pages, each its own folder with an `index.html`
 - `/projects/`
 - `/publications/`
 - `/conferences/`
-- `/leadership/`
+- `/posters/` (Poster & Presentations)
 
-Conferences and Leadership are kept as dedicated pages rather than homepage sections.
+Conferences and Poster & Presentations are kept as dedicated pages rather than homepage sections.
 
 ## Query-driven detail views
 
@@ -32,7 +32,7 @@ Every dedicated page supports a `?view=` query parameter. Examples:
 /projects/?view=urbanization-pattern
 /publications/?view=urban-park-use
 /conferences/?view=aag-2025
-/leadership/?view=campus-sustainability
+/posters/?view=my-poster-id
 ```
 
 Cards and links generate these URLs automatically. `?view=overview` opens the page overview.
@@ -50,7 +50,7 @@ Cards and links generate these URLs automatically. `?view=overview` opens the pa
   "gisProjects": "/database/projects.json",
   "researchPublications": "/database/publications.json",
   "conferences": "/database/conferences.json",
-  "leadership": "/database/leadership.json"
+  "posters": "/database/posters.json"
 }
 ```
 
@@ -73,7 +73,7 @@ Because every page JSON path and `imageBase` in `database.json` is resolved with
      "gisProjects": "https://raw.githubusercontent.com/<user>/portfolio-database/main/projects.json",
      "researchPublications": "https://raw.githubusercontent.com/<user>/portfolio-database/main/publications.json",
      "conferences": "https://raw.githubusercontent.com/<user>/portfolio-database/main/conferences.json",
-     "leadership": "https://raw.githubusercontent.com/<user>/portfolio-database/main/leadership.json"
+     "posters": "https://raw.githubusercontent.com/<user>/portfolio-database/main/posters.json"
    }
    ```
 3. No changes to `app.js`, `index.html`, or any sub-page are needed — only `database.json`'s values change. You can also mix local and remote (e.g. keep `home.json` local but serve `imageBase` from a remote host), and any single `image` value can itself be a full `http(s)://` URL to bypass `imageBase` entirely for that one image.
@@ -83,6 +83,18 @@ Note that `database/database.json` itself is always fetched from the website's o
 **Every internal path — nav links, the `fetch('/database/database.json')` call in `app.js`, and the local defaults above — is root-relative (starts with `/`).** This matters because the dedicated pages live one folder deep (e.g. `/projects/index.html`); a path like `database/home.json` without the leading slash would resolve relative to `/projects/` and 404, instead of hitting `/database/home.json`. Keep new local paths root-relative if you extend the site.
 
 This also assumes the site is served from the domain root (a custom domain, or a root deploy on a host like Netlify or Vercel). If you deploy to a GitHub Pages *project* site under a subpath (`username.github.io/repo-name/`), root-relative paths will need to be adjusted to include that subpath.
+
+## Top bar (navigation)
+
+The top bar is defined once, in `NAV_ITEMS` at the top of `app.js`; every page's `<nav id="site-nav">` is empty in the HTML and filled from that list. To add, rename or reorder a page, edit `NAV_ITEMS` only (write `&` as `&amp;`). An old URL that moved can be redirected in `_redirects` (`/leadership/*` → `/posters/` is already there).
+
+## Poster & Presentations and PDFs
+
+`posters.json` holds a `posters` list shaped like projects (`id`, `title`, `meta`, `image`, `summary`, `sections`). A section's `content` may contain `{ "type": "pdf", "pdf": "posters/file.pdf", "caption": "…" }`. `/pdf-viewer.js` (using the vendored PDF.js in `/vendor/pdfjs/`) draws it in a window exactly as tall as page 1, so page 1 is fully visible without scrolling and any further pages scroll inside the window. PDFs live under the database's `photos/` folder like images, and that host must allow cross-origin reads (`_headers` in the database repo does this on Cloudflare Pages).
+
+## Certificates
+
+`education-experience.json` may contain `"certificates": [{ "image": "education-experience/x.jpg", "caption": "…" }]`; they are shown in a Certificates section below Experience.
 
 ## Run locally
 
