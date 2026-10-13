@@ -20,9 +20,9 @@ The top bar also opens dedicated pages, each its own folder with an `index.html`
 - `/projects/`
 - `/publications/`
 - `/conferences/`
-- `/posters/` (Poster & Presentations)
+- `/posters/` (Poster presentations)
 
-Conferences and Poster & Presentations are kept as dedicated pages rather than homepage sections.
+Conference & Presentations and Poster presentations are kept as dedicated pages rather than homepage sections.
 
 ## Query-driven detail views
 
@@ -31,7 +31,7 @@ Every dedicated page supports a `?view=` query parameter. Examples:
 ```text
 /projects/?view=urbanization-pattern
 /publications/?view=urban-park-use
-/conferences/?view=aag-2025
+/projects/?view=<project-id>
 /posters/?view=my-poster-id
 ```
 
