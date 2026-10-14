@@ -2,9 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://munakhan.pages.dev/</loc>
-    <lastmod>2026-10-14</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
+    <lastmod>2026-10-13</lastmod>
   </url>
-  <!-- add one <url> block for every other page, e.g. /projects.html -->
+  <url>
+    <loc>https://munakhan.pages.dev/my-story/</loc>
+    <lastmod>2026-10-13</lastmod>
+  </url>
+  <url>
+    <loc>https://munakhan.pages.dev/education-experience/</loc>
+    <lastmod>2026-10-13</lastmod>
+  </url>
+  <url>
+    <loc>https://munakhan.pages.dev/projects/</loc>
+    <lastmod>2026-10-13</lastmod>
+  </url>
+  <url>
+    <loc>https://munakhan.pages.dev/publications/</loc>
+    <lastmod>2026-10-13</lastmod>
+  </url>
+  <url>
+    <loc>https://munakhan.pages.dev/conferences/</loc>
+    <lastmod>2026-10-13</lastmod>
+  </url>
+  <url>
+    <loc>https://munakhan.pages.dev/posters/</loc>
+    <lastmod>2026-10-13</lastmod>
+  </url>
 </urlset>
