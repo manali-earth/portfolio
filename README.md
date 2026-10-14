@@ -109,3 +109,14 @@ Then open `http://localhost:8000`.
 ## HTML in database text
 
 Any text in the database JSON can contain inline HTML such as `<br>`, `<b>`, `<i>`, `<a href="...">` or `<span>`. The site inserts it as HTML in every section (hero, news, gallery captions, timelines, project cards, detail pages, contact, page headings), so formatting can be changed from the admin panel without touching site code. Places that cannot hold markup (alt text, tooltips, the browser tab title) automatically get a tag-free version.
+
+## Search engine optimisation (SEO)
+
+- **Per-page head tags.** Each page's static `<head>` holds its own `<title>`, meta description, canonical URL, Open Graph / Twitter card tags and JSON-LD structured data (`Person` + `WebSite` on the homepage, `ProfilePage` on My Story, `WebPage` + `BreadcrumbList` on the others). `app.js` no longer rewrites the title on overview pages, so edit the tags in the HTML. Keep titles under ~60 characters and descriptions under ~160.
+- **Detail views.** `/projects/?view=<id>` and `/posters/?view=<id>` are separate pieces of content, so `seoForDetail()` in `app.js` gives each its own title, description, canonical URL and share image from the database item. The canonical origin is read from the page's own `<link rel="canonical">`.
+- **Crawlable fallback.** The `<h1>`, the six navigation links and a one-sentence intro are in the static HTML (the script replaces them with the same content). If you change `NAV_ITEMS` in `app.js`, change the `<nav id="site-nav">` markup in every page too.
+- **Sitemap.** After adding or removing projects/posters, run `python3 scripts/generate-sitemap.py` and commit `sitemap.xml`, then resubmit it in Search Console if you like.
+- **Not-found page.** `404.html` makes Cloudflare Pages return a real 404 for unknown URLs instead of serving the homepage with a 200 (a "soft 404").
+- **Share image and icons.** `og-image.jpg` (1200x630), `favicon.ico`, `favicon.svg` and `apple-touch-icon.png` live in the repo root.
+- **If the domain changes** (for example to a custom domain), search-and-replace `https://munakhan.pages.dev` in the HTML pages, `robots.txt`, `sitemap.xml` and `scripts/generate-sitemap.py`.
+- **Do not block the data host.** Googlebot has to fetch the JSON on `database-34a.pages.dev` to see the page content. Never add `Disallow: /` to that site's `robots.txt`.
