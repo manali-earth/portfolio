@@ -6,7 +6,7 @@ let imageBase = ''; let siteTitle = '';
 // (Labels are HTML, so write & as &amp;.)
 // For crawlers and no-JS visitors every page's HTML also contains these same links statically inside <nav id="site-nav">;
 // when you change this list, change that markup in each page too (the script below simply replaces it with the same links).
-const NAV_ITEMS = [['/my-story/', 'My Story'], ['/education-experience/', 'Education &amp; Experience'], ['/projects/', 'Projects'], ['/publications/', 'Research Publications'], ['/conferences/', 'Seminar &amp; presentation'], ['/posters/', 'Poster presentations']];
+const NAV_ITEMS = [['/my-story/', 'My Story'], ['/education-experience/', 'Education &amp; Experience'], ['/projects/', 'Projects'], ['/publications/', 'Research Publications'], ['/conferences/', 'Seminars &amp; Conferences'], ['/posters/', 'Poster presentations']];
 function navHref(h) { return h }
 function renderNav() { const n = $('#site-nav'); if (n) n.innerHTML = NAV_ITEMS.map(([h, label]) => `<a href="${navHref(h)}"${location.pathname === h || location.pathname === h.slice(0, -1) ? ' aria-current="page"' : ''}>${label}</a>`).join('') }
 renderNav();
@@ -59,7 +59,7 @@ function renderProjectSegments(d) {
     const body = groups.map(g => `<section class="project-segment" id="seg-${g.id}"><h2>${g.label}</h2>${g.items.length ? `<div class="project-cards page-projects">${g.items.map(p => projectCard(p, '')).join('')}</div>` : `<p class="segment-empty">Projects coming soon.</p>`}</section>`).join('');
     return `<p class="section-lead">${d.intro}</p><nav class="segment-nav" aria-label="Project sections">${nav}</nav>${body}`
 }
-// The Seminar & presentation page is an article like My Story. Data still in the old card format (items[]) is converted on the fly.
+// The Seminars & Conferences page is an article like My Story. Data still in the old card format (items[]) is converted on the fly.
 function conferencesAsArticle(d) { if (Array.isArray(d.sections) && d.sections.length) return d; return { ...d, sections: (d.items || []).map(i => ({ heading: i.title, content: [...(i.date ? [{ type: 'paragraph', text: `<em>${i.date}</em>` }] : []), ...(i.details ? [{ type: 'paragraph', text: i.details }] : [])] })) } }
 // Search-engine tags. Each page's static <head> already holds the title, description, canonical URL and social tags for its
 // overview. A detail view (?view=<id>) is its own piece of content, so it gets its own title, description and canonical URL.
