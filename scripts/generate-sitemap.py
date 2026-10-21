@@ -6,7 +6,7 @@
 
 Lists the 7 main pages plus one URL per project and per poster (each has its own ?view=<id> page with its own title,
 description and canonical URL - see seoForDetail() in app.js). Run it after adding/removing projects or posters in the
-admin panel, then commit sitemap.xml. Standard library only.
+database, then commit sitemap.xml. Standard library only.
 """
 import argparse, datetime, json, pathlib, urllib.request
 from xml.sax.saxutils import escape

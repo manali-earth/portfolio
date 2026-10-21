@@ -3,12 +3,44 @@ const iconSvg = { linkedin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d
 let imageBase = ''; let siteTitle = '';
 // The top bar lives here and only here: every page has an empty <nav id="site-nav"> that is filled from this list,
 // so adding, renaming or reordering a page is one edit instead of one per HTML file.
-// (Labels are HTML, so write & as &amp;.)
+// Each item is [link, text key]; the wording itself is in SITE_TEXT_DEFAULTS below (HTML, so write & as &amp;).
 // For crawlers and no-JS visitors every page's HTML also contains these same links statically inside <nav id="site-nav">;
 // when you change this list, change that markup in each page too (the script below simply replaces it with the same links).
-const NAV_ITEMS = [['/my-story/', 'My Story'], ['/education-experience/', 'Education &amp; Experience'], ['/projects/', 'Projects'], ['/publications/', 'Research Publications'], ['/conferences/', 'Seminars &amp; Conferences'], ['/posters/', 'Poster presentations']];
+const NAV_ITEMS = [['/my-story/', 'nav.my-story'], ['/education-experience/', 'nav.education-experience'], ['/projects/', 'nav.projects'], ['/publications/', 'nav.publications'], ['/conferences/', 'nav.conferences'], ['/posters/', 'nav.posters']];
 function navHref(h) { return h }
-function renderNav() { const n = $('#site-nav'); if (n) n.innerHTML = NAV_ITEMS.map(([h, label]) => `<a href="${navHref(h)}"${location.pathname === h || location.pathname === h.slice(0, -1) ? ' aria-current="page"' : ''}>${label}</a>`).join('') }
+// Fixed wording of the site (not part of any page's JSON). Every entry can be replaced by an entry of the same key in
+// site-text.json, which database.json points to as "siteText". HTML in the HTML pages is tagged data-text="<key>" and works the same way.
+// This object must stay plain JSON (double quotes) on the lines between the two markers.
+window.SITE_TEXT_DEFAULTS = {
+    "nav.my-story": "My Story",
+    "nav.education-experience": "Education &amp; Experience",
+    "nav.projects": "Projects",
+    "nav.publications": "Research Publications",
+    "nav.conferences": "Seminars &amp; Conferences",
+    "nav.posters": "Poster presentations",
+    "home.news-read-more": "Read more",
+    "home.experience-subheading": "Experience",
+    "card.noun-project": "Project",
+    "card.view-project": "View project →",
+    "card.noun-poster": "Poster",
+    "card.view-details": "View details →",
+    "publications.read-here": "Read here",
+    "edu.education": "Education",
+    "edu.experience": "Experience",
+    "edu.certificates": "Certificates",
+    "projects.more-section": "More projects",
+    "projects.section-empty": "Projects coming soon.",
+    "posters.empty": "Posters and presentations coming soon.",
+    "detail.kicker-fallback": "Portfolio detail",
+    "detail.open-link": "Open related link →",
+    "detail.back": "← Back to overview"
+}; // end-site-text-defaults
+let siteText = {};
+function T(key) { const o = siteText[key]; return typeof o === 'string' && o !== '' ? o : (window.SITE_TEXT_DEFAULTS[key] ?? '') }
+// Replaces the wording of every element tagged data-text="<key>" that has an override; removing an override restores the original.
+function applyStaticText() { $$('[data-text]').forEach(el => { if (el._textDefault === undefined) el._textDefault = el.innerHTML; const o = siteText[el.dataset.text]; el.innerHTML = typeof o === 'string' && o !== '' ? o : el._textDefault }) }
+function fetchSiteText(index) { return index.siteText ? fetch(index.siteText).then(r => r.ok ? r.json() : {}).then(o => o && typeof o === 'object' && !Array.isArray(o) ? o : {}).catch(() => ({})) : Promise.resolve({}) }
+function renderNav() { const n = $('#site-nav'); if (n) n.innerHTML = NAV_ITEMS.map(([h, key]) => `<a href="${navHref(h)}"${location.pathname === h || location.pathname === h.slice(0, -1) ? ' aria-current="page"' : ''}>${T(key)}</a>`).join('') }
 renderNav();
 // PDFs on Poster presentations pages are drawn by /pdf-viewer.js (loaded only when a page actually has a PDF).
 const PDF_VIEWER_SRC = '/pdf-viewer.js';
@@ -21,10 +53,10 @@ function plain(s) { return String(s ?? '').replace(/<br\s*\/?>/gi, ' ').replace(
 function attr(s) { return plain(s).replace(/"/g, '&quot;') }
 function img(p) { return p ? (/^https?:\/\//.test(p) ? p : imageBase + p) : '' }
 function applySiteChrome(home) { siteTitle = (home.site && home.site.title) || ''; const t = $('#site-title'); if (t && siteTitle) t.innerHTML = siteTitle; commonFooter(home.person) }
-async function load() { try { const key = document.body.dataset.page; const index = await (await fetch('/database/database.json')).json(); imageBase = index.imageBase || ''; const dbKey = key === 'my-story' ? 'myStory' : key === 'education-experience' ? 'educationExperience' : key === 'gis-projects' ? 'gisProjects' : key === 'research-publications' ? 'researchPublications' : key; const data = await (await fetch(index[dbKey])).json(); const home = key === 'home' ? data : await (await fetch(index.home)).json(); applySiteChrome(home); render(key, data); bind() } catch (e) { console.error(e); document.body.insertAdjacentHTML('afterbegin', `<div class="load-error">Could not load the page database: ${e.message}</div>`) } }
+async function load() { try { const key = document.body.dataset.page; const index = await (await fetch('/database/database.json')).json(); imageBase = index.imageBase || ''; const dbKey = key === 'my-story' ? 'myStory' : key === 'education-experience' ? 'educationExperience' : key === 'gis-projects' ? 'gisProjects' : key === 'research-publications' ? 'researchPublications' : key; const [data, homeData, text] = await Promise.all([fetch(index[dbKey]).then(r => r.json()), key === 'home' ? null : fetch(index.home).then(r => r.json()), fetchSiteText(index)]); const home = homeData || data; siteText = text; renderNav(); applySiteChrome(home); render(key, data); applyStaticText(); bind() } catch (e) { console.error(e); document.body.insertAdjacentHTML('afterbegin', `<div class="load-error">Could not load the page database: ${e.message}</div>`) } }
 function socialLinks(socials) { return socials.map(s => `<a href="${s.url}" target="_blank" rel="noreferrer" aria-label="${attr(s.label)}" title="${attr(s.label)}">${iconSvg[s.icon] || s.icon}</a>`).join('') }
 function render(key, data) { if (key === 'home') renderHome(data); else renderPage(key, data) }
-function renderHome(d) { $('#hero-name').innerHTML = d.person.name; $('#hero-role').innerHTML = d.person.title || d.person.intro; document.querySelector('.hero').style.backgroundImage = `url('${img(d.heroImage)}')`; $('#news-list').innerHTML = d.news.map(n => `<li><span class="news-date">${n.date}:</span> ${n.text} ${n.link ? `<a href="${n.link}">${n.label || 'Read more'}</a>` : ''}</li>`).join(''); renderGallery(d.gallery); $('#education-home').innerHTML = d.education.map(row).join('') + `<h3 class="home-subheading">Experience</h3>` + d.experience.map(row).join(''); $('#project-cards').innerHTML = d.projects.map(p => projectCard(p, '/projects/')).join(''); $('#publication-home').innerHTML = d.publications.map(pub).join(''); $('#contact-email').innerHTML = `<a href="mailto:${d.contact.email}">${d.contact.email}</a>`; $('#contact-phone').innerHTML = `<a href="tel:${d.contact.phone.replace(/[^+\d]/g, '')}">${d.contact.phone}</a>`; $('#contact-location').innerHTML = d.contact.location }
+function renderHome(d) { $('#hero-name').innerHTML = d.person.name; $('#hero-role').innerHTML = d.person.title || d.person.intro; document.querySelector('.hero').style.backgroundImage = `url('${img(d.heroImage)}')`; $('#news-list').innerHTML = d.news.map(n => `<li><span class="news-date">${n.date}:</span> ${n.text} ${n.link ? `<a href="${n.link}">${n.label || T('home.news-read-more')}</a>` : ''}</li>`).join(''); renderGallery(d.gallery); $('#education-home').innerHTML = d.education.map(row).join('') + `<h3 class="home-subheading">${T('home.experience-subheading')}</h3>` + d.experience.map(row).join(''); $('#project-cards').innerHTML = d.projects.map(p => projectCard(p, '/projects/')).join(''); $('#publication-home').innerHTML = d.publications.map(pub).join(''); $('#contact-email').innerHTML = `<a href="mailto:${d.contact.email}">${d.contact.email}</a>`; $('#contact-phone').innerHTML = `<a href="tel:${d.contact.phone.replace(/[^+\d]/g, '')}">${d.contact.phone}</a>`; $('#contact-location').innerHTML = d.contact.location }
 function renderGallery(gallery) {
     let i = 0; const main = $('#gallery-featured'), thumbs = $('#gallery-thumbs'), caption = $('#gallery-caption'); if (!main || !thumbs) return; function show(n) { i = (n + gallery.length) % gallery.length; main.src = img(gallery[i].image); main.alt = plain(gallery[i].alt); if (caption) caption.innerHTML = gallery[i].alt || '';[...thumbs.children].forEach((t, idx) => t.classList.toggle('active', idx === i)) }
     thumbs.innerHTML = gallery.map((g, idx) => `<button class="gallery-thumb" type="button" data-i="${idx}"><img loading="lazy" src="${img(g.image)}" alt="${attr(g.alt)}"></button>`).join('');
@@ -32,31 +64,31 @@ function renderGallery(gallery) {
     const next = $('#gallery-next'); if (next) next.addEventListener('click', () => show(i + 1));
     show(0)
 }
-function projectCard(p, page, o = {}) { return `<article class="project-card"><a href="${page}?view=${p.id || 'overview'}">${p.image ? `<img src="${img(p.image)}" alt="${attr(p.title)}">` : `<div class="project-card-noimg">${p.meta || o.noun || 'Project'}</div>`}<div class="project-card-body"><h3>${p.title}</h3><p>${p.description || p.summary || p.details || ''}</p><small>${p.meta || ''}</small><span class="card-link">${o.cta || 'View project →'}</span></div></a></article>` }
-function pub(p) { return `<article class="publication-item"><div class="pub-year">${p.year}</div><h3>${p.title}</h3><p>${p.authors}. ${p.status}. ${p.link ? `<a href="${p.link}" ${p.link.startsWith('http') ? 'target="_blank" rel="noreferrer"' : ''}>Read here</a>` : ''}</p></article>` }
+function projectCard(p, page, o = {}) { return `<article class="project-card"><a href="${page}?view=${p.id || 'overview'}">${p.image ? `<img src="${img(p.image)}" alt="${attr(p.title)}">` : `<div class="project-card-noimg">${p.meta || o.noun || T('card.noun-project')}</div>`}<div class="project-card-body"><h3>${p.title}</h3><p>${p.description || p.summary || p.details || ''}</p><small>${p.meta || ''}</small><span class="card-link">${o.cta || T('card.view-project')}</span></div></a></article>` }
+function pub(p) { return `<article class="publication-item"><div class="pub-year">${p.year}</div><h3>${p.title}</h3><p>${p.authors}. ${p.status}. ${p.link ? `<a href="${p.link}" ${p.link.startsWith('http') ? 'target="_blank" rel="noreferrer"' : ''}>${T('publications.read-here')}</a>` : ''}</p></article>` }
 function row(x) { return `<article class="timeline-item"><div class="timeline-period">${x.period}</div><div><h3>${x.institution}</h3><p><strong>${x.role}</strong><br>${x.details}</p></div></article>` }
 function renderBlock(b) { return b.type === 'image' ? `<figure class="section-image"><img loading="lazy" src="${img(b.image)}" alt="${attr(b.alt)}">${b.alt ? `<figcaption>${b.alt}</figcaption>` : ''}</figure>` : b.type === 'pdf' ? (b.pdf ? `<figure class="section-pdf"><div class="pdf-viewer pdf-loading" data-pdf="${attr(img(b.pdf))}"></div>${(b.caption || b.alt) ? `<figcaption>${b.caption || b.alt}</figcaption>` : ''}</figure>` : '') : `<p>${b.text}</p>` }
 function renderSection(s) { return `${s.heading ? `<h2>${s.heading}</h2>` : ''}${(s.content || []).map(renderBlock).join('')}` }
 function renderPage(key, d) {
     $('#page-heading').innerHTML = d.heading; const c = $('#page-content'); const view = new URLSearchParams(location.search).get('view'); if (view && view !== 'overview') { const item = findItem(d, view); if (item) { c.innerHTML = detail(item); seoForDetail(item, view); return } }
-    if (key === 'conferences') d = conferencesAsArticle(d); if (key === 'my-story' || key === 'conferences') c.innerHTML = `<div class="prose">${d.intro ? `<p>${d.intro}</p>` : ''}${(d.sections || []).map(renderSection).join('')}</div>`; if (key === 'education-experience') c.innerHTML = `<h2>Education</h2>${d.education.map(row).join('')}<h2>Experience</h2>${d.experience.map(row).join('')}${renderCertificates(d.certificates)}`; if (key === 'gis-projects') c.innerHTML = renderProjectSegments(d); if (key === 'research-publications') c.innerHTML = d.publications.map(pub).join(''); if (key === 'posters') c.innerHTML = renderPosters(d);
+    if (key === 'conferences') d = conferencesAsArticle(d); if (key === 'my-story' || key === 'conferences') c.innerHTML = `<div class="prose">${d.intro ? `<p>${d.intro}</p>` : ''}${(d.sections || []).map(renderSection).join('')}</div>`; if (key === 'education-experience') c.innerHTML = `<h2>${T('edu.education')}</h2>${d.education.map(row).join('')}<h2>${T('edu.experience')}</h2>${d.experience.map(row).join('')}${renderCertificates(d.certificates)}`; if (key === 'gis-projects') c.innerHTML = renderProjectSegments(d); if (key === 'research-publications') c.innerHTML = d.publications.map(pub).join(''); if (key === 'posters') c.innerHTML = renderPosters(d);
 }
 function renderCertificates(list) {
     const certs = (list || []).filter(x => x && x.image);
     if (!certs.length) return '';
-    return `<h2>Certificates</h2><div class="certificates-grid">${certs.map(x => `<figure class="certificate"><a href="${attr(img(x.image))}" target="_blank" rel="noopener"><img loading="lazy" src="${img(x.image)}" alt="${attr(x.caption || 'Certificate')}"></a>${x.caption ? `<figcaption>${x.caption}</figcaption>` : ''}</figure>`).join('')}</div>`
+    return `<h2>${T('edu.certificates')}</h2><div class="certificates-grid">${certs.map(x => `<figure class="certificate"><a href="${attr(img(x.image))}" target="_blank" rel="noopener"><img loading="lazy" src="${img(x.image)}" alt="${attr(x.caption || 'Certificate')}"></a>${x.caption ? `<figcaption>${x.caption}</figcaption>` : ''}</figure>`).join('')}</div>`
 }
 function renderPosters(d) {
-    const list = d.posters || [], card = { noun: 'Poster', cta: 'View details →' };
-    return `${d.intro ? `<p class="section-lead">${d.intro}</p>` : ''}${list.length ? `<div class="project-cards page-projects">${list.map(p => projectCard(p, '', card)).join('')}</div>` : `<p class="segment-empty">Posters and presentations coming soon.</p>`}`
+    const list = d.posters || [], card = { noun: T('card.noun-poster'), cta: T('card.view-details') };
+    return `${d.intro ? `<p class="section-lead">${d.intro}</p>` : ''}${list.length ? `<div class="project-cards page-projects">${list.map(p => projectCard(p, '', card)).join('')}</div>` : `<p class="segment-empty">${T('posters.empty')}</p>`}`
 }
 function renderProjectSegments(d) {
     const cats = (d.categories || []).slice(), known = new Set(cats.map(x => x.id));
     // Projects with a missing/unknown category still show up, under a catch-all group.
-    if (d.projects.some(p => !known.has(p.category))) cats.push({ id: '__other', label: 'More projects' });
+    if (d.projects.some(p => !known.has(p.category))) cats.push({ id: '__other', label: T('projects.more-section') });
     const groups = cats.map(c => ({ ...c, items: d.projects.filter(p => (c.id === '__other' ? !known.has(p.category) : p.category === c.id)) }));
     const nav = groups.map(g => `<a href="#seg-${g.id}">${g.label}${g.items.length ? ` <span>${g.items.length}</span>` : ''}</a>`).join('');
-    const body = groups.map(g => `<section class="project-segment" id="seg-${g.id}"><h2>${g.label}</h2>${g.items.length ? `<div class="project-cards page-projects">${g.items.map(p => projectCard(p, '')).join('')}</div>` : `<p class="segment-empty">Projects coming soon.</p>`}</section>`).join('');
+    const body = groups.map(g => `<section class="project-segment" id="seg-${g.id}"><h2>${g.label}</h2>${g.items.length ? `<div class="project-cards page-projects">${g.items.map(p => projectCard(p, '')).join('')}</div>` : `<p class="segment-empty">${T('projects.section-empty')}</p>`}</section>`).join('');
     return `<p class="section-lead">${d.intro}</p><nav class="segment-nav" aria-label="Project sections">${nav}</nav>${body}`
 }
 // The Seminars & Conferences page is an article like My Story. Data still in the old card format (items[]) is converted on the fly.
@@ -81,7 +113,7 @@ function seoForDetail(item, id) {
     if (item.image) { const src = img(item.image); set('meta[property="og:image"]', 'content', src); set('meta[name="twitter:image"]', 'content', src); set('meta[property="og:image:alt"]', 'content', name) }
 }
 function findItem(d, id) { for (const key of ['projects', 'publications', 'posters']) { const item = d[key]?.find(x => (x.id || '') === id); if (item) return item } return null }
-function detail(i) { const hasSections = Array.isArray(i.sections) && i.sections.length > 0; const hasPdf = hasSections && i.sections.some(s => (s.content || []).some(b => b.type === 'pdf')); return `<article class="detail-view${hasPdf ? ' detail-wide' : ''}"><p class="detail-kicker">${i.year || i.date || i.meta || 'Portfolio detail'}</p><h2>${i.title || i.name}</h2>${i.image ? `<img class="detail-image" src="${img(i.image)}" alt="${attr(i.title)}">` : ''}${hasSections ? `${i.summary ? `<p>${i.summary}</p>` : ''}${i.sections.map(renderSection).join('')}` : `<p>${i.details || i.description || i.authors || ''}</p>`}${i.status ? `<p><strong>${i.status}</strong></p>` : ''}${i.link ? `<a class="detail-link" href="${i.link}" ${i.link.startsWith('http') ? 'target="_blank" rel="noreferrer"' : ''}>Open related link →</a>` : ''}<p class="back-link"><a href="?view=overview">← Back to overview</a></p></article>` }
+function detail(i) { const hasSections = Array.isArray(i.sections) && i.sections.length > 0; const hasPdf = hasSections && i.sections.some(s => (s.content || []).some(b => b.type === 'pdf')); return `<article class="detail-view${hasPdf ? ' detail-wide' : ''}"><p class="detail-kicker">${i.year || i.date || i.meta || T('detail.kicker-fallback')}</p><h2>${i.title || i.name}</h2>${i.image ? `<img class="detail-image" src="${img(i.image)}" alt="${attr(i.title)}">` : ''}${hasSections ? `${i.summary ? `<p>${i.summary}</p>` : ''}${i.sections.map(renderSection).join('')}` : `<p>${i.details || i.description || i.authors || ''}</p>`}${i.status ? `<p><strong>${i.status}</strong></p>` : ''}${i.link ? `<a class="detail-link" href="${i.link}" ${i.link.startsWith('http') ? 'target="_blank" rel="noreferrer"' : ''}>${T('detail.open-link')}</a>` : ''}<p class="back-link"><a href="?view=overview">${T('detail.back')}</a></p></article>` }
 function commonFooter(person = {}) { if ($('#footer-name')) $('#footer-name').innerHTML = `© ${new Date().getFullYear()} ${person.name || ''}`; const fs = $('#footer-socials'); if (fs && person.socials) fs.innerHTML = socialLinks(person.socials) }
-function bind() { mountPdfViewers(); const b = $('.menu-button'), n = $('#site-nav'); if (b) b.addEventListener('click', () => { const open = n.classList.toggle('open'); b.setAttribute('aria-expanded', open) }); $$('#site-nav a').forEach(a => a.addEventListener('click', () => n.classList.remove('open'))) }
+function bind() { mountPdfViewers(); const b = $('.menu-button'), n = $('#site-nav'); if (b && !b.dataset.bound) b.dataset.bound = '1', b.addEventListener('click', () => { const open = n.classList.toggle('open'); b.setAttribute('aria-expanded', open) }); $$('#site-nav a').forEach(a => a.addEventListener('click', () => n.classList.remove('open'))) }
 load();

@@ -8,8 +8,7 @@
  *  - For longer PDFs the box scrolls on its own (page 1 fills it; the rest follow underneath).
  *  - Pages are drawn lazily and freed again when far off-screen, so long decks stay light.
  *
- * Needs /vendor/pdfjs/ (PDF.js classic build). The same file is copied into the admin panel by
- * `pnpm sync:preview`, so the editor, the preview and the live site always render PDFs identically.
+ * Needs /vendor/pdfjs/ (PDF.js classic build).
  */
 (function () {
     'use strict';
@@ -32,7 +31,7 @@
         return libPromise;
     }
 
-    // One parsed document per URL, shared by every box that shows it (the admin preview re-renders on each edit).
+    // One parsed document per URL, shared by every box that shows it (a page that re-renders its content reuses the parsed document).
     function getDoc(url) {
         if (!docCache[url]) {
             docCache[url] = loadLib().then(function (lib) {
